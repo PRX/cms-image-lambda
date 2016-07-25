@@ -10,7 +10,6 @@ describe('resizer-validate', () => {
       expect(meta.width).to.equal(1823);
       expect(meta.height).to.equal(665);
       expect(meta.filesize).to.equal(58603);
-      expect(meta.mime).to.equal('image/png');
       expect(meta.format).to.equal('png');
     });
   });
@@ -38,7 +37,6 @@ describe('resizer-validate', () => {
       expect(meta.width).to.equal(100);
       expect(meta.height).to.equal(36);
       expect(meta.filesize).to.equal(5057);
-      expect(meta.mime).to.equal('image/jpeg');
       expect(meta.format).to.equal('jpeg');
     });
   });
