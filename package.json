@@ -7,8 +7,9 @@
     "start": "npm test",
     "test": "mocha test/",
     "watch": "mocha test/ -w",
-    "deploy-staging": "node-lambda deploy --configFile config/staging.env",
-    "deploy-prod": "node-lambda deploy --configFile config/production.env"
+    "deploy-dev": "AWS_ENVIRONMENT=development node-lambda deploy --configFile config/development.env",
+    "deploy-staging": "AWS_ENVIRONMENT=staging node-lambda deploy --configFile config/staging.env",
+    "deploy-prod": "AWS_ENVIRONMENT=production node-lambda deploy --configFile config/production.env"
   },
   "author": "ryan cavis <ryan@prx.org>",
   "license": "MIT",

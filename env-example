@@ -1,4 +1,3 @@
-AWS_ENVIRONMENT=development
 AWS_ROLE_ARN=your-arn-here
 AWS_REGION=us-east-1
 AWS_FUNCTION_NAME=cms-image-lambda
