@@ -5,6 +5,8 @@ const resizer = require('../lib/resizer');
 
 describe('resizer work', () => {
 
+  const TEST_DEST = `${process.env.TEST_FOLDER}/1234`;
+
   let s3ImagePath = helper.putS3TestFile('small.png');
   let s3AudioPath = helper.putS3TestFile('mp3.png');
 
@@ -12,19 +14,20 @@ describe('resizer work', () => {
   beforeEach(() => {
     ie = helper.buildMessage('create', {
       id: 1234,
-      upload_url: `https://s3.amazonaws.com/${s3ImagePath}`,
+      uploadPath: `https://s3.amazonaws.com/${s3ImagePath}`,
+      destinationPath: TEST_DEST,
       _links: {profile: {href: 'image/story'}}
     });
   });
 
   before(() => {
-    return helper.listS3Path(`public/piece_images/1234`).then(keys => {
+    return helper.listS3Path(TEST_DEST).then(keys => {
       return helper.deleteS3(keys);
     });
   });
 
   after(() => {
-    return helper.listS3Path(`public/piece_images/1234`).then(keys => {
+    return helper.listS3Path(TEST_DEST).then(keys => {
       return helper.deleteS3(keys);
     });
   });
@@ -35,18 +38,18 @@ describe('resizer work', () => {
     expect(ie.invalid).to.be.undefined;
     return resizer.work(ie).then(success => {
       expect(success).to.be.true;
-      return helper.listS3Path(`public/piece_images/1234`).then(keys => {
+      return helper.listS3Path(TEST_DEST).then(keys => {
         expect(keys.length).to.equal(4);
-        expect(keys).to.include('public/piece_images/1234/small.png');
-        expect(keys).to.include('public/piece_images/1234/small_medium.png');
-        expect(keys).to.include('public/piece_images/1234/small_small.png');
-        expect(keys).to.include('public/piece_images/1234/small_square.png');
+        expect(keys).to.include(`${TEST_DEST}/small.png`);
+        expect(keys).to.include(`${TEST_DEST}/small_medium.png`);
+        expect(keys).to.include(`${TEST_DEST}/small_small.png`);
+        expect(keys).to.include(`${TEST_DEST}/small_square.png`);
       });
     });
   });
 
   it('catches non-image validation errors', function() {
-    ie.body.upload_url = `https://s3.amazonaws.com/${s3AudioPath}`;
+    ie.body.uploadPath = `https://s3.amazonaws.com/${s3AudioPath}`;
     expect(ie.invalid).to.be.undefined;
     return resizer.work(ie).then(success => {
       expect(success).to.be.false;
@@ -54,7 +57,7 @@ describe('resizer work', () => {
   });
 
   xit('catches non-downloadable upload urls', function() {
-    ie.body.upload_url = `https://s3.amazonaws.com/foo/bar/nothing.jpg`;
+    ie.body.uploadPath = `https://s3.amazonaws.com/foo/bar/nothing.jpg`;
     expect(ie.invalid).to.be.undefined;
     return resizer.work(ie).then(success => {
       expect(success).to.be.false;

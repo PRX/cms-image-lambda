@@ -1,23 +1,35 @@
 'use strict';
 
 let Q = require('q');
-let ImageEvent = require('lib/image-event');
-let resizer = require('lib/resizer');
+let ImageEvent = require('./lib/image-event');
+let resizer = require('./lib/resizer');
 
 module.exports.handler = (event, context, callback) => {
   if (!event || !event.Records) {
-    callback(new Error('Invalid event input: ' + JSON.stringify(event, null, 2)));
+    return callback(new Error('Invalid event input: ' + JSON.stringify(event, null, 2)));
+  }
+  if (process.env.ENVIRONMENT === 'development') {
+    console.log('Debug record:', JSON.stringify(event, null, 2));
   }
 
-  let imageEvents = event.Records.map(rec => new ImageEvent(rec));
-  let invalids = events.filter(ie => ie.invalid);
+  // sort by validity, and presence of an uploadPath
+  let all = event.Records.map(rec => new ImageEvent(rec));
+  let valids = all.filter(ie => !ie.invalid && ie.imageUploadPath);
+  let invalids = all.filter(ie => ie.invalid);
+  let noUploads = all.filter(ie => !ie.invalid && !ie.imageUploadPath);
+
+  // invalid is insanity, so actually throw an error and abort
   if (invalids.length) {
     let invalidMsgs = invalids.map(ie => ie.invalid).join(', ');
-    callback(new Error(`Invalid records: ${invalidMsgs}`));
-  } else {
-    Q.all(imageEvents.map(imgEvent => resizer.work(imgEvent))).done(
-      results => callback(null, 'that worked!'),
-      err => callback(err)
-    );
+    return callback(new Error(`Invalid records: ${invalidMsgs}`));
   }
+
+  // process valid records
+  Q.all(valids.map(imgEvent => resizer.work(imgEvent))).done(
+    results => callback(null, {
+      completed: valids.length,
+      skipped: noUploads.length
+    }),
+    err => callback(err)
+  );
 }

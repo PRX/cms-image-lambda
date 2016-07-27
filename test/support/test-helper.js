@@ -69,7 +69,10 @@ exports.buildEvent = (data) => {
   return i;
 }
 exports.buildMessage = (action, msgBody) => {
-  return new ImageEvent({
+  return new ImageEvent(exports.buildRaw(action, msgBody));
+}
+exports.buildRaw = (action, msgBody) => {
+  return {
     EventSource: 'aws:sns',
     Sns: {
       TopicArn: `arn:aws:sns:us-east-1:1234:test_announce_image_${action}`,
@@ -82,5 +85,5 @@ exports.buildMessage = (action, msgBody) => {
       }),
       Timestamp: '2016-07-20T17:57:07.176Z'
     }
-  });
+  };
 }

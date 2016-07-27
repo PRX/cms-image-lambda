@@ -14,29 +14,15 @@ describe('image-event', () => {
     expect(ie.invalid).to.equal(undefined);
     expect(ie.topic).to.match(/test_announce_image_create/);
     expect(ie.env).to.equal('test');
-    expect(ie.id).to.equal('11cba7cb-12af-4d46-9247-0b88949803db');
+    expect(ie.id).to.equal('26ee6b69-37ac-4d5c-a15d-d567f5c2d12b');
     expect(ie.app).to.equal('cms');
     expect(ie.sentAt).to.be.a('Date');
     expect(ie.subject).to.equal('image');
     expect(ie.action).to.equal('create');
     expect(ie.body.filename).to.equal('self.jpg');
-    expect(ie.imageId).to.equal(403987);
-    expect(ie.imageType).to.equal('piece');
-    expect(ie.imageUploadUrl).to.equal('s3://something.jpg');
-    expect(ie.imageDestinationPath).to.equal('public/piece_images/403987');
-  });
-
-  it('guesses image types from profile strings', () => {
-    ie.body._links.profile.href = 'http://meta.prx.org/model/foo/bar';
-    expect(ie.imageType).to.equal(null);
-    ie.body._links.profile.href = 'http://meta.prx.org/model/image/account';
-    expect(ie.imageType).to.equal('account');
-    ie.body._links.profile.href = 'http://meta.prx.org/model/image/series';
-    expect(ie.imageType).to.equal('series');
-    ie.body._links.profile.href = 'http://meta.prx.org/model/image/story';
-    expect(ie.imageType).to.equal('piece');
-    ie.body._links.profile.href = 'http://meta.prx.org/model/image/user';
-    expect(ie.imageType).to.equal('user');
+    expect(ie.imageId).to.equal(123456);
+    expect(ie.imageUploadPath).to.equal('s3://something.jpg');
+    expect(ie.imageDestinationPath).to.equal('public/piece_images/123456');
   });
 
   it('only handles sns events', () => {
@@ -81,23 +67,22 @@ describe('image-event', () => {
     expect(ie.validate).to.not.throw();
   });
 
-  it('requires an upload_url', () => {
-    ie.body.upload_url = null;
-    expect(ie.validate).to.throw(/no upload_url present/i);
+  it('does not require an uploadPath', () => {
+    ie.body.uploadPath = null;
+    expect(ie.validate).to.not.throw();
+  });
+
+  it('requires a destinationPath, if there is an uploadPath', () => {
+    ie.body.destinationPath = null;
+    ie.body.uploadPath = null;
+    expect(ie.validate).to.not.throw();
+    ie.body.uploadPath = 'something';
+    expect(ie.validate).to.throw(/no destinationpath present/i);
   });
 
   it('requires an image id', () => {
     ie.body.id = '';
     expect(ie.validate).to.throw(/no id present/i);
-  });
-
-  it('requires a known profile link', () => {
-    ie.body._links.profile = null;
-    expect(ie.validate).to.throw(/no profile link/i);
-    ie.body._links.profile = {href: ''};
-    expect(ie.validate).to.throw(/unable to determine image type from profile link/i);
-    ie.body._links.profile = {href: 'http://meta.prx.org/model/foo/bar'};
-    expect(ie.validate).to.throw(/unable to determine image type from profile link/i);
   });
 
 });
