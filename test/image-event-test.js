@@ -85,4 +85,13 @@ describe('image-event', () => {
     expect(ie.validate).to.throw(/no id present/i);
   });
 
+  it('parses the image type when possible', () => {
+    ie.body.destinationPath = 'public/something/1234';
+    expect(ie.imageType).to.equal('something');
+    ie.body.destinationPath = 'foo/bar/it';
+    expect(ie.imageType).to.be.null;
+    ie.body.destinationPath = null;
+    expect(ie.imageType).to.be.null;
+  });
+
 });

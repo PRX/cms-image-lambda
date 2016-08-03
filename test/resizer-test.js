@@ -49,7 +49,7 @@ describe('resizer work', () => {
       expect(success).to.be.true;
 
       let file = getUploadedFile();
-      expect(file.id).to.equal(ie.id);
+      expect(file.id).to.equal(ie.imageId);
       expect(file.name).to.equal('small.png');
       expect(file.downloaded).to.equal(true);
       expect(file.valid).to.equal(true);
@@ -122,6 +122,7 @@ describe('resizer work', () => {
   });
 
   it('throws sqs errors', function() {
+    this.timeout(5000);
     UploadedFile.prototype.callback.restore();
     sinon.stub(UploadedFile.prototype, 'callback').returns(Q.reject(new Error('sqs-err')));
     return resizer.work(ie).then(

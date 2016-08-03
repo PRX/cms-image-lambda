@@ -6,7 +6,7 @@ const UploadedFile = require('../lib/uploaded-file');
 describe('uploaded-file', () => {
 
   it('parses image event data', () => {
-    let file = new UploadedFile({id: 1234, imageDestinationPath: 'foo/bar', name: 'wontwork'});
+    let file = new UploadedFile({imageId: 1234, imageDestinationPath: 'foo/bar', name: 'wontwork'});
     expect(file.id).to.equal(1234);
     expect(file.path).to.equal('foo/bar');
     expect(file.name).to.be.null;
@@ -46,7 +46,7 @@ describe('uploaded-file', () => {
   });
 
   it('serializes to json', () => {
-    let file = new UploadedFile({id: 1234, imageDestinationPath: 'foo/bar'});
+    let file = new UploadedFile({imageId: 1234, imageDestinationPath: 'foo/bar'});
     file.setDownloaded({name: 'foo.bar'});
     file.setValidated();
     let json = JSON.parse(file.toJSON());
@@ -61,12 +61,23 @@ describe('uploaded-file', () => {
     beforeEach(() => helper.fetchSQS());
     afterEach(() => helper.fetchSQS());
 
-    it('calls back to sqs', () => {
-      let id = (new Date()).getTime();
-      let file = new UploadedFile({id: id, imageDestinationPath: 'foo/bar'});
+    const retryFetchSQS = (id, attemptsLeft) => {
+      return helper.fetchSQS().then(messages => {
+        if (attemptsLeft === 0 || messages.find(m => m.id === id)) {
+          return messages;
+        } else {
+          return retryFetchSQS(id, attemptsLeft - 1);
+        }
+      });
+    }
+
+    it('calls back to sqs', function() {
+      this.timeout(5000);
+
+      let file = new UploadedFile({imageId: 'some-id-here', imageDestinationPath: 'foo/bar'});
       file.setDownloaded();
-      return file.callback().delay(500).then(() => helper.fetchSQS()).then(messages => {
-        let msg = messages.find(m => m.id === id);
+      return file.callback().then(() => retryFetchSQS('some-id-here', 3)).then(messages => {
+        let msg = messages.find(m => m.id === 'some-id-here');
         expect(msg).to.exist;
         expect(msg.path).to.equal('foo/bar');
         expect(msg.downloaded).to.equal(false);

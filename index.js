@@ -1,8 +1,8 @@
 'use strict';
 
-let Q = require('q');
-let ImageEvent = require('./lib/image-event');
-let resizer = require('./lib/resizer');
+const Q = require('q');
+const ImageEvent = require('./lib/image-event');
+const resizer = require('./lib/resizer');
 
 module.exports.handler = (event, context, callback) => {
   if (!event || !event.Records) {
