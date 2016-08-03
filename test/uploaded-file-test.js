@@ -46,12 +46,12 @@ describe('uploaded-file', () => {
   });
 
   it('serializes to json', () => {
-    let file = new UploadedFile({imageId: 1234, imageDestinationPath: 'foo/bar'});
+    let file = new UploadedFile({imageId: 1234, imageType: 'foo', imageDestinationPath: 'foo/bar'});
     file.setDownloaded({name: 'foo.bar'});
     file.setValidated();
     let json = JSON.parse(file.toJSON());
-    expect(json).to.have.keys('id', 'path', 'name', 'width', 'height', 'size',
-      'format', 'downloaded', 'valid', 'resized');
+    expect(json).to.have.keys('id', 'path', 'type', 'name', 'width', 'height',
+      'size', 'format', 'downloaded', 'valid', 'resized');
     expect(json.id).to.equal(1234);
     expect(json.path).to.equal('foo/bar');
   });
