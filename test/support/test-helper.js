@@ -1,16 +1,20 @@
 'use strict';
 
-const fs = require('fs');
-const s3 = new (require('aws-sdk')).S3();
-const Buffer = require('buffer').Buffer;
-const ImageEvent = require('../../lib/image-event');
-
 // test env configuration
 require('dotenv').config({path: `${__dirname}/../../config/test.env`});
+let match = process.env.SQS_CALLBACK.match(/sqs\.(.+)\.amazonaws\.com/);
+
+const region = match && match[1];
+const fs = require('fs');
+const s3 = new (require('aws-sdk')).S3();
+const sqs = new (require('aws-sdk')).SQS({region: region});
+const Buffer = require('buffer').Buffer;
+const ImageEvent = require('../../lib/image-event');
 
 // global includes
 global.expect = require('chai').expect;
 global.Q = require('q');
+global.sinon = require('sinon');
 
 // helper methods
 exports.minutesFromNow = (mins) => {
@@ -56,6 +60,31 @@ exports.deleteS3 = (keys) => {
   return Q.ninvoke(s3, 'deleteObjects', {
     Bucket: process.env.DESTINATION_BUCKET,
     Delete: {Objects: keys.map(k => { return {Key: k}; })}
+  });
+}
+
+// get messages from sqs
+exports.fetchSQS = (appendTo) => {
+  return Q.ninvoke(sqs, 'receiveMessage', {
+    QueueUrl: process.env.SQS_CALLBACK,
+    MaxNumberOfMessages: 10
+  }).then(resp => {
+    if (resp.Messages) {
+      return Q.ninvoke(sqs, 'deleteMessageBatch', {
+        QueueUrl: process.env.SQS_CALLBACK,
+        Entries: resp.Messages.map(msg => {
+          return {Id: msg.MessageId, ReceiptHandle: msg.ReceiptHandle};
+        })
+      }).then(() => {
+        if (resp.Messages.length == 10) {
+          return exports.fetchSQS((appendTo || []).concat(resp.Messages));
+        } else {
+          return (appendTo || []).concat(resp.Messages).map(msg => JSON.parse(msg.Body));
+        }
+      });
+    } else {
+      return [];
+    }
   });
 }
 

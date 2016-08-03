@@ -34,12 +34,32 @@ describe('resizer-download', () => {
     );
   });
 
-  it('handles http errors', () => {
+  it('handles http 404 errors', () => {
     let url = 'http://google.com/nothing.jpg';
     return resizer.download(url).then(
       (data) => { throw 'should have gotten an error'; },
       (err) => {
         expect(err.message).to.match(/got 404 for/i);
+      }
+    );
+  });
+
+  it('handles http host errors', () => {
+    let url = 'http://foo.bar.gov/nothing.jpg';
+    return resizer.download(url).then(
+      (data) => { throw 'should have gotten an error'; },
+      (err) => {
+        expect(err.message).to.match(/ENOTFOUND/i);
+      }
+    );
+  });
+
+  it('handles s3 not found errors', () => {
+    let url = `s3://${s3Path}/doesnotexist`;
+    return resizer.download(url).then(
+      (data) => { throw 'should have gotten an error'; },
+      (err) => {
+        expect(err.message).to.match(/key does not exist/i);
       }
     );
   });

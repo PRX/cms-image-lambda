@@ -15,21 +15,33 @@ describe('resizer-validate', () => {
   });
 
   it('rejects non-image binary files', () => {
-    return resizer.validate(helper.readFile('mp3.png')).then(meta => {
-      expect(meta).to.be.null;
-    });
+    return resizer.validate(helper.readFile('mp3.png')).then(
+      (meta) => { throw 'should have gotten an error'; },
+      (err) => {
+        expect(err.message).to.match(/no decode delegate for this image format/i);
+        expect(err.fromValidate).to.equal(true);
+      }
+    );
   });
 
   it('rejects non-image text files', () => {
-    return resizer.validate(helper.readFile('created.json')).then(meta => {
-      expect(meta).to.be.null;
-    });
+    return resizer.validate(helper.readFile('created.json')).then(
+      (meta) => { throw 'should have gotten an error'; },
+      (err) => {
+        expect(err.message).to.match(/no decode delegate for this image format/i);
+        expect(err.fromValidate).to.equal(true);
+      }
+    );
   });
 
   it('rejects corrupt image files', () => {
-    return resizer.validate(helper.readFile('corrupt.png')).then(meta => {
-      expect(meta).to.be.null;
-    });
+    return resizer.validate(helper.readFile('corrupt.png')).then(
+      (meta) => { throw 'should have gotten an error'; },
+      (err) => {
+        expect(err.message).to.match(/corrupt image/i);
+        expect(err.fromValidate).to.equal(true);
+      }
+    );
   });
 
   it('recognizes image formats', () => {
