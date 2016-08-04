@@ -29,7 +29,10 @@ exports.readStream = (name) => {
 
 // temp file to s3
 const putFiles = {};
-exports.putS3TestFile = (fileName) => {
+exports.putS3TestFile = (fileName, bucket, folder) => {
+  bucket = bucket || process.env.TEST_BUCKET;
+  folder = folder || process.env.TEST_FOLDER;
+
   if (!putFiles[fileName]) {
     putFiles[fileName] = true;
     before(function() {
@@ -37,13 +40,13 @@ exports.putS3TestFile = (fileName) => {
       return Q.ninvoke(s3, 'upload', {
         ACL: 'public-read',
         Body: exports.readFile(fileName),
-        Bucket: process.env.TEST_BUCKET,
+        Bucket: bucket,
         Expires: exports.minutesFromNow(5),
-        Key: `${process.env.TEST_FOLDER}/${fileName}`
+        Key: `${folder}/${fileName}`
       });
     });
   }
-  return `${process.env.TEST_BUCKET}/${process.env.TEST_FOLDER}/${fileName}`;
+  return `${bucket}/${folder}/${fileName}`;
 }
 
 // list files in a bucket folder
@@ -54,6 +57,12 @@ exports.listS3Path = (pathPrefix) => {
   }).then(data => {
     return data.Contents.map(c => c.Key);
   });
+}
+exports.fetchS3 = (key) => {
+  return Q.ninvoke(s3, 'getObject', {
+    Bucket: process.env.DESTINATION_BUCKET,
+    Key: key
+  }).then(data => data.Body);
 }
 exports.deleteS3 = (keys) => {
   if (keys.length < 1) return;

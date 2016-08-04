@@ -26,8 +26,9 @@ describe('handler', () => {
     let okayRecord = helper.buildRaw('create', {id: 1234, destinationPath: 'foo'});
     handler({Records: [okayRecord]}, null, (err, result) => {
       expect(err).to.be.null;
-      expect(result).to.have.keys('completed', 'skipped');
-      expect(result.completed).to.equal(0);
+      expect(result).to.have.keys('resized', 'deleted', 'skipped');
+      expect(result.resized).to.equal(0);
+      expect(result.deleted).to.equal(0);
       expect(result.skipped).to.equal(1);
       done();
     });

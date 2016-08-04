@@ -63,7 +63,7 @@ describe('image-event', () => {
     expect(ie.validate).to.not.throw();
     ie.action = 'update';
     expect(ie.validate).to.not.throw();
-    ie.action = 'destroy';
+    ie.action = 'delete';
     expect(ie.validate).to.not.throw();
   });
 
