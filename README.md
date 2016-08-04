@@ -1,6 +1,7 @@
 # cms-image-lambda
 
 [![Build Status](https://snap-ci.com/PRX/cms-image-lambda/branch/master/build_image)](https://snap-ci.com/PRX/cms-image-lambda/branch/master)
+[![codecov](https://codecov.io/gh/PRX/cms-image-lambda/branch/master/graph/badge.svg)](https://codecov.io/gh/PRX/cms-image-lambda)
 
 ## Description
 
