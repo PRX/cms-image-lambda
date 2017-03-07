@@ -1,0 +1,34 @@
+version: 0.1
+environment_variables:
+  plaintext:
+    BUILD_PHASE_MARKER: build_phase_complete
+phases:
+  install:
+    commands:
+      - apt-get update -y
+      - apt-get install -y jq
+  pre_build:
+    commands:
+      - npm install
+  build:
+    commands:
+      - npm test
+      - touch $BUILD_PHASE_MARKER
+  post_build:
+    commands:
+      - test -e $BUILD_PHASE_MARKER
+      - echo Zipping Lambda code
+      - zip -r cms-image-lambda-$(basename $CODEBUILD_SOURCE_VERSION) . -x .git
+      - echo Copying zipped Lambda to S3 $CODE_BUCKET
+      - aws s3 cp cms-image-lambda-$(basename $CODEBUILD_SOURCE_VERSION) s3://$CODE_BUCKET/cms-image-lambda-$(basename $CODEBUILD_SOURCE_VERSION)
+      - aws s3 cp s3://$TEMPLATE_CONFIG_BUCKET/$TEMPLATE_CONFIG_ARTIFACT $TEMPLATE_CONFIG_ARTIFACT
+      - unzip $TEMPLATE_CONFIG_ARTIFACT
+      - jq --arg zip cms-image-lambda-$(basename $CODEBUILD_SOURCE_VERSION) '.Parameters.CmsImageLambdaZipName = $zip' staging.json > staging2.json
+      - rm staging.json && mv staging2.json staging.json
+      - zip $TEMPLATE_CONFIG_ARTIFACT staging.json
+      - aws s3 cp $TEMPLATE_CONFIG_ARTIFACT s3://$TEMPLATE_CONFIG_BUCKET/
+artifacts:
+  # It seems like CodePipeline and CodeBuild expect an artifact here. Currently
+  # we don't need any, so this is essentially a no-op.
+  files:
+    - README.md
