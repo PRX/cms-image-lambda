@@ -20,6 +20,9 @@ global.sinon = require('sinon');
 exports.minutesFromNow = (mins) => {
   return new Date((new Date()).getTime() + mins * 60000);
 }
+exports.path = (name) => {
+  return `${__dirname}/${name}`;
+}
 exports.readFile = (name) => {
   return fs.readFileSync(`${__dirname}/${name}`);
 }
