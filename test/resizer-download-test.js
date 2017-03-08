@@ -12,7 +12,9 @@ describe('resizer-download', () => {
     let url = `s3://${s3Path}`;
     return resizer.download(url).then(data => {
       expect(data.name).to.equal('small.png');
-      expect(data.buffer).to.be.an.instanceof(Buffer)
+      expect(data.path).to.match(/\/small\.png$/);
+      expect(data.s3Bucket).to.equal(process.env.TEST_BUCKET);
+      expect(data.s3Key).to.equal(process.env.TEST_FOLDER + '/small.png');
     });
   });
 
@@ -20,7 +22,9 @@ describe('resizer-download', () => {
     let url = `https://s3.amazonaws.com/${s3Path}`;
     return resizer.download(url).then(data => {
       expect(data.name).to.equal('small.png');
-      expect(data.buffer).to.be.an.instanceof(Buffer)
+      expect(data.path).to.match(/\/small\.png$/);
+      expect(data.s3Bucket).to.be.undefined;
+      expect(data.s3Key).to.be.undefined;
     });
   });
 

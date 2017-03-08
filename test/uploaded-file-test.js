@@ -8,7 +8,7 @@ describe('uploaded-file', () => {
   it('parses image event data', () => {
     let file = new UploadedFile({imageId: 1234, imageDestinationPath: 'foo/bar', name: 'wontwork'});
     expect(file.id).to.equal(1234);
-    expect(file.path).to.equal('foo/bar');
+    expect(file.destPath).to.equal('foo/bar');
     expect(file.name).to.be.null;
   });
 
@@ -17,10 +17,13 @@ describe('uploaded-file', () => {
     expect(file.downloaded).to.equal(false);
     file.setDownloaded();
     expect(file.downloaded).to.equal(false);
-    file.setDownloaded({name: 'foo.bar', buffer: 'something'});
+    file.setDownloaded({name: 'foo.bar', path: 'something'});
     expect(file.downloaded).to.equal(true);
     expect(file.name).to.equal('foo.bar');
-    expect(file.buffer).to.equal('something');
+    expect(file.tmpPath).to.equal('something');
+    file.setDownloaded({s3Bucket: 'buck', s3Key: 'key'});
+    expect(file.tmpS3Bucket).to.equal('buck');
+    expect(file.tmpS3Key).to.equal('key');
   });
 
   it('sets validated', () => {
