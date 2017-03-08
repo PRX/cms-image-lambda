@@ -61,6 +61,12 @@ exports.listS3Path = (pathPrefix) => {
     return data.Contents.map(c => c.Key);
   });
 }
+exports.getContentTypes = (keys) => {
+  return Q.all(keys.map(k => {
+    let params = {Bucket: process.env.DESTINATION_BUCKET, Key: k};
+    return Q.ninvoke(s3, 'headObject', params).then(data => data.ContentType);
+  }));
+}
 exports.fetchS3 = (key) => {
   return Q.ninvoke(s3, 'getObject', {
     Bucket: process.env.DESTINATION_BUCKET,

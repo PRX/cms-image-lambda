@@ -55,13 +55,16 @@ describe('resizer work', () => {
       expect(file.valid).to.equal(true);
       expect(file.resized).to.equal(true);
 
-      return helper.listS3Path(TEST_DEST).then(keys => {
-        expect(keys.length).to.equal(4);
-        expect(keys).to.include(`${TEST_DEST}/small.png`);
-        expect(keys).to.include(`${TEST_DEST}/small_medium.png`);
-        expect(keys).to.include(`${TEST_DEST}/small_small.png`);
-        expect(keys).to.include(`${TEST_DEST}/small_square.png`);
-      });
+      return helper.listS3Path(TEST_DEST);
+    }).then(keys => {
+      expect(keys.length).to.equal(4);
+      expect(keys).to.include(`${TEST_DEST}/small.png`);
+      expect(keys).to.include(`${TEST_DEST}/small_medium.png`);
+      expect(keys).to.include(`${TEST_DEST}/small_small.png`);
+      expect(keys).to.include(`${TEST_DEST}/small_square.png`);
+      return helper.getContentTypes(keys);
+    }).then(types => {
+      expect(types).to.have.members(['image/png']);
     });
   });
 
