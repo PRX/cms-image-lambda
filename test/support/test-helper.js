@@ -15,6 +15,7 @@ const ImageEvent = require('../../lib/image-event');
 global.expect = require('chai').expect;
 global.Q = require('q');
 global.sinon = require('sinon');
+global.nock = require('nock');
 
 // helper methods
 exports.minutesFromNow = (mins) => {
