@@ -28,12 +28,23 @@ describe('resizer-download', () => {
     });
   });
 
+  it('handles missing download errors', () => {
+    return resizer.download(null).then(
+      (data) => { throw 'should have gotten an error'; },
+      (err) => {
+        expect(err.message).to.match(/no url set/i);
+        expect(err.fromDownload).to.be.true;
+      }
+    );
+  });
+
   it('handles s3 errors', () => {
     let url = 's3://foo/bar.jpg';
     return resizer.download(url).then(
       (data) => { throw 'should have gotten an error'; },
       (err) => {
         expect(err.message).to.match(/access denied/i);
+        expect(err.fromDownload).to.equal.true;
       }
     );
   });
@@ -44,6 +55,7 @@ describe('resizer-download', () => {
       (data) => { throw 'should have gotten an error'; },
       (err) => {
         expect(err.message).to.match(/got 404 for/i);
+        expect(err.fromDownload).to.equal.true;
       }
     );
   });
@@ -54,6 +66,7 @@ describe('resizer-download', () => {
       (data) => { throw 'should have gotten an error'; },
       (err) => {
         expect(err.message).to.match(/ENOTFOUND/i);
+        expect(err.fromDownload).to.equal.true;
       }
     );
   });
@@ -64,6 +77,7 @@ describe('resizer-download', () => {
       (data) => { throw 'should have gotten an error'; },
       (err) => {
         expect(err.message).to.match(/key does not exist/i);
+        expect(err.fromDownload).to.equal.true;
       }
     );
   });
@@ -74,8 +88,30 @@ describe('resizer-download', () => {
       (data) => { throw 'should have gotten an error'; },
       (err) => {
         expect(err.message).to.match(/unrecognized url format/i);
+        expect(err.fromDownload).to.equal.true;
       }
     );
+  });
+
+  it('throws content-length mismatch errors', () => {
+    nock('http://foo.bar').get('/mismatch.mp3').reply(200, '--mp3--', {'Content-Length': 11});
+    return resizer.download('http://foo.bar/mismatch.mp3').then(
+      (data) => { throw 'should have gotten an error'; },
+      (err) => {
+        expect(err.message).to.match(/expected 11 bytes/i);
+        expect(err.message).to.match(/got 7/i);
+        expect(err.fromDownload).to.be.falsey;
+      }
+    );
+  });
+
+  it('is okay with matching content-length', () => {
+    nock('http://foo.bar').get('/okay.mp3').reply(200, '--mp3--', {'Content-Length': 7});
+    return resizer.download('http://foo.bar/okay.mp3').then(data => {
+      expect(data.name).to.equal('okay.mp3');
+      expect(data.path).to.match(/\/okay\.mp3$/);
+      expect(data.contentType).to.be.undefined;
+    });
   });
 
 });

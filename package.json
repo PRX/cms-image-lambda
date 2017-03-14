@@ -21,7 +21,6 @@
   "dependencies": {
     "aws-sdk": "^2.4.7",
     "q": "^1.4.1",
-    "request": "^2.73.0",
     "sharp": "^0.17.2"
   },
   "devDependencies": {
@@ -30,6 +29,7 @@
     "dotenv": "^2.0.0",
     "istanbul": "^0.4.4",
     "mocha": "^2.5.3",
+    "nock": "^9.0.9",
     "node-lambda": "^0.8.13",
     "sinon": "^1.17.5"
   }
