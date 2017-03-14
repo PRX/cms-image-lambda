@@ -28,6 +28,15 @@ describe('resizer-download', () => {
     });
   });
 
+  it('follows http redirects', () => {
+    let url = `https://s3.amazonaws.com/${s3Path}`;
+    nock('http://foo.bar').get('/redirect.jpg').reply(302, 'redirect', {'Location': url});
+    return resizer.download('http://foo.bar/redirect.jpg').then(data => {
+      expect(data.name).to.equal('redirect.jpg');
+      expect(data.path).to.match(/\/redirect\.jpg$/);
+    });
+  });
+
   it('handles missing download errors', () => {
     return resizer.download(null).then(
       (data) => { throw 'should have gotten an error'; },
@@ -94,8 +103,8 @@ describe('resizer-download', () => {
   });
 
   it('throws content-length mismatch errors', () => {
-    nock('http://foo.bar').get('/mismatch.mp3').reply(200, '--mp3--', {'Content-Length': 11});
-    return resizer.download('http://foo.bar/mismatch.mp3').then(
+    nock('http://foo.bar').get('/mismatch.jpg').reply(200, '--jpg--', {'Content-Length': 11});
+    return resizer.download('http://foo.bar/mismatch.jpg').then(
       (data) => { throw 'should have gotten an error'; },
       (err) => {
         expect(err.message).to.match(/expected 11 bytes/i);
@@ -106,10 +115,10 @@ describe('resizer-download', () => {
   });
 
   it('is okay with matching content-length', () => {
-    nock('http://foo.bar').get('/okay.mp3').reply(200, '--mp3--', {'Content-Length': 7});
-    return resizer.download('http://foo.bar/okay.mp3').then(data => {
-      expect(data.name).to.equal('okay.mp3');
-      expect(data.path).to.match(/\/okay\.mp3$/);
+    nock('http://foo.bar').get('/okay.jpg').reply(200, '--jpg--', {'Content-Length': 7});
+    return resizer.download('http://foo.bar/okay.jpg').then(data => {
+      expect(data.name).to.equal('okay.jpg');
+      expect(data.path).to.match(/\/okay\.jpg$/);
       expect(data.contentType).to.be.undefined;
     });
   });
