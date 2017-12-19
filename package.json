@@ -8,9 +8,10 @@
     "test": "mocha test/",
     "ci": "istanbul cover _mocha -- test/ && codecov",
     "watch": "mocha test/ -w",
-    "deploy-dev": "node bin/deploy development",
-    "deploy-staging": "node bin/deploy staging",
-    "deploy-prod": "node bin/deploy production"
+    "build": "npm run build-sync && npm run build-prune && npm run build-zip",
+    "build-sync": "rsync -crl --delete --exclude-from .lambdaignore . build",
+    "build-prune": "cd build && npm prune --production > /dev/null",
+    "build-zip": "rm -f build.zip && cd build && zip -rq ../build.zip ."
   },
   "repository": {
     "type": "git",
