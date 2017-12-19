@@ -13,7 +13,6 @@ phases:
   build:
     commands:
       - "cd $(ls -d */|head -n 1)"
-      - "cp env-example .env"
       - "docker-compose build"
       - "docker-compose run test"
   post_build:
