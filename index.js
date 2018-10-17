@@ -1,16 +1,15 @@
 'use strict';
 
 const Q = require('q');
+const logger = require('./lib/logger');
 const ImageEvent = require('./lib/image-event');
 const resizer = require('./lib/resizer');
 const deleter = require('./lib/deleter');
 
 module.exports.handler = (event, context, callback) => {
   if (!event || !event.Records) {
-    return callback(new Error('Invalid event input: ' + JSON.stringify(event, null, 2)));
-  }
-  if (process.env.DEBUG) {
-    console.log('Incoming:', JSON.stringify(event, null, 2));
+    logger.error(`Invalid event input: ${JSON.stringify(event)}`);
+    return callback(null); // don't retry
   }
 
   // sort by task
@@ -27,10 +26,9 @@ module.exports.handler = (event, context, callback) => {
     }
   });
 
-  // invalid is insanity, so actually throw an error and abort
+  // invalid is insanity, so log those errors and skip them
   if (invalids.length) {
-    let invalidMsgs = invalids.map(ie => ie.invalid).join(', ');
-    return callback(new Error(`Invalid records: ${invalidMsgs}`));
+    invalids.forEach(ie => logger.error(`Invalid record: ${ie.invalid}`));
   }
 
   // process valid records
@@ -38,12 +36,19 @@ module.exports.handler = (event, context, callback) => {
   let deleteWork = deletes.map(ie => deleter.work(ie));
   Q.all(resizeWork.concat(deleteWork)).done(
     results => {
-      let out = {resized: resizes.length, deleted: deletes.length, skipped: skips.length};
-      if (process.env.DEBUG) {
-        console.log('Out:', JSON.stringify(out));
-      }
-      callback(null, out);
+      logger.info(`Resized: ${resizes.length}`);
+      logger.info(`Deleted: ${deletes.length}`);
+      logger.info(`Skipped: ${skips.length}`);
+      callback(null, {
+        invalid: invalids.length,
+        resized: resizes.length,
+        deleted: deletes.length,
+        skipped: skips.length
+      });
     },
-    err => callback(err)
+    err => {
+      logger.error(err.message || `${err}`);
+      callback(err);
+    }
   );
 }
