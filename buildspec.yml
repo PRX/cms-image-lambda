@@ -1,0 +1,30 @@
+version: 0.2
+env:
+  variables:
+    PRX_LAMBDA_CODE_S3_KEY: "lambda/PRX-cms-image-lambda.zip"
+    PRX_LAMBDA_CODE_CONFIG_PARAMETERS: "CmsImageLambdaCodeS3ObjectVersion"
+    PRX_LAMBDA_ARCHIVE_BUILD_PATH: "/app/build.zip"
+  parameter-store:
+    CMS_ACCESS_KEY_ID: "/prx/test/cms-image-lambda/AWS_ACCESS_KEY_ID"
+    CMS_DEFAULT_REGION: "/prx/test/cms-image-lambda/AWS_DEFAULT_REGION"
+    CMS_SECRET_ACCESS_KEY: "/prx/test/cms-image-lambda/AWS_SECRET_ACCESS_KEY"
+    CODECOV_TOKEN: "/prx/test/cms-image-lambda/CODECOV_TOKEN"
+phases:
+  build:
+    commands:
+      - "cd $(ls -d */|head -n 1)"
+      - "cp env-example .env"
+      - "echo AWS_ACCESS_KEY_ID=$CMS_ACCESS_KEY_ID >> .env"
+      - "echo AWS_DEFAULT_REGION=$CMS_DEFAULT_REGION >> .env"
+      - "echo AWS_SECRET_ACCESS_KEY=$CMS_SECRET_ACCESS_KEY >> .env"
+      - "echo CODECOV_TOKEN=$CODECOV_TOKEN >> .env"
+      - "echo CODEBUILD_BUILD_ID=$CODEBUILD_BUILD_ID >> .env"
+      - "echo PRX_REPO=$PRX_REPO >> .env"
+      - "echo PRX_COMMIT=$PRX_COMMIT >> .env"
+      - "echo PRX_BRANCH=$PRX_BRANCH >> .env"
+      - "echo PRX_GITHUB_PR=$PRX_GITHUB_PR >> .env"
+      - "docker-compose build"
+      - "docker-compose run test ci"
+  post_build:
+    commands:
+      - 'curl -sO "https://raw.githubusercontent.com/PRX/Infrastructure/master/ci/utility/post_build.sh" && chmod +x post_build.sh && bash ./post_build.sh'
