@@ -1,6 +1,5 @@
-# cms-image-lambda
+# CMS Image Lambda
 
-[![Build Status](https://snap-ci.com/PRX/cms-image-lambda/branch/master/build_image)](https://snap-ci.com/PRX/cms-image-lambda/branch/master)
 [![codecov](https://codecov.io/gh/PRX/cms-image-lambda/branch/master/graph/badge.svg)](https://codecov.io/gh/PRX/cms-image-lambda)
 
 ## Description
@@ -22,35 +21,73 @@ Triggered via SNS notifications (see [Announce](https://github.com/PRX/announce)
 1. Verify that the image exists in the destination S3 bucket/path.  (Non-existent images are ignored).
 2. Create a `deleted.json` file in the destination bucket/path, containing the last known HAL representation of the image before there record was deleted.  This is a TEMPORARY measure, as CMS hard-deletes images, but we don't really want to remove the files yet.
 
-## Developing
+### Callbacks
 
-Make sure you have AWS credentials locally (usually in `~/.aws/credentials`) that are able to access
-the `TEST_BUCKET` and `DESTINATION_BUCKET` defined in `config/test.env`.  Then, just...
+SQS callbacks contain the following JSON data:
+
+| Key    | Description |
+| ------ | ----------- |
+| id     | ID of the Image that triggered this job
+| type   | Subclass of Image ("piece_images", "series_images", etc)
+| path   | Destination path in S3 the files were copied to
+| name   | Original file name
+| width  | Width of the original image
+| height | Height of the original image
+| size   | Size of the file in bytes
+| format | Detected image format ("jpeg", "png", etc)
+| downloaded | Boolean if the image download succeeded
+| valid      | Boolean if `sharp` recognized the image file
+| resized    | Boolean if resizing/uploading to S3 destination succeeded
+| error      | String if any error occurred in the above 3 states
+
+After successfully resizing, there will be 4 files in the destination path:
+
+- `s3://${bucket}/${path}/original_name.jpg`
+- `s3://${bucket}/${path}/original_name_square.jpg` (75x75 px thumbnail)
+- `s3://${bucket}/${path}/original_name_small.jpg` (120px best-fit resize)
+- `s3://${bucket}/${path}/original_name_medium.jpg` (240px best-fit resize)
+
+Note that only `create` and `update` calls get an SQS callback.  Deletes are
+processed without calling back to CMS.
+
+# Installation
+
+To get started, first run an `yarn install`.  Or if you're using Docker, then
+`docker-compose build`.
+
+## Tests
+
+You do need a writeable S3 bucket and SQS to run the full test suite. The test/dev
+values for these are already set in the `env-example`, so you really just need
+some local AWS credentials (usually in `~/.aws/credentials`) that are able to
+access these resources.
 
 ```
-npm install
-npm test # or npm run watch
+cp env-example .env
+yarn
+yarn test
+yarn run watch
+```
+
+Another option is to use Docker (in which case you'll have to provide some AWS
+credentials to the docker container itself, via ENV variables):
+
+```
+cp env-example .env
+echo AWS_ACCESS_KEY_ID=some-access-key >> .env
+echo AWS_SECRET_ACCESS_KEY=some-secret >> .env
+echo AWS_DEFAULT_REGION=us-east-1 >> .env
+
+docker-compose build
+docker-compose run test
 ```
 
 ## Deploying
 
-Deployment to AWS is handled by [node-lambda](https://www.npmjs.com/package/node-lambda),
-with some hacks!
+Deploying is handled by the PRX [Infrastructure](https://github.com/PRX/Infrastructure) repo,
+using CloudFormation.  Internally, this will run the `yarn run build` command to
+zip the lambda code and upload it to S3.
 
-IMPORTANT: due to the native-bindings used by `sharp`, this project must be built/deployed
-from a Lambda-like environment. It may work on any 64-bit linux platform, but I've had the
-best luck on an amazon-linux EC2 instance.
+# License
 
-To create a new Lambda function, you should `cp env-example .env`. Then manually
-deploy it using `./node_modules/node-lambda deploy -e [development|staging|production]`.
-This will create/overwrite any configuration changes you've made to the lambda, so you
-only want to use this for initial setup.
-
-To update an existing Lambda function, use the "deploy-ENV" scripts in `package.json`.
-No `.env` is required, as the non-secret configs are in the `/config` folder.
-
-```
-npm run deploy-dev
-npm run deploy-staging
-npm run deploy-prod
-```
+[MIT License](http://opensource.org/licenses/MIT)
