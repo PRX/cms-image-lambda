@@ -44,9 +44,3 @@ jspm_packages
 .env
 build
 *.zip
-*.mp3
-!test/test.mp3
-
-# ffmpeg binaries
-bin/ffmpeg
-bin/ffprobe

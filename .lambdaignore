@@ -13,4 +13,3 @@ docker-compose.yml
 *.test.js
 *.log
 *.zip
-*.mp3

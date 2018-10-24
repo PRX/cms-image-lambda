@@ -66,8 +66,8 @@ describe('handler', () => {
   });
 
   it('retries download errors thrown by the worker', (done) => {
-    nock('http://foo.bar').get('/503.mp3').reply(503);
-    let retryable = helper.buildRaw('create', {id: 1234, destinationPath: 'foo', uploadPath: 'http://foo.bar/503.mp3'});
+    nock('http://foo.bar').get('/503.jpg').reply(503);
+    let retryable = helper.buildRaw('create', {id: 1234, destinationPath: 'foo', uploadPath: 'http://foo.bar/503.jpg'});
     handler({Records: [retryable]}, null, (err, result) => {
       expect(err).to.be.an.instanceof(Error);
       expect(err).to.match(/got 503/i);

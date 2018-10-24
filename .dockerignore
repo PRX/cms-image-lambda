@@ -1,6 +1,4 @@
 .env
-bin/ffmpeg
-bin/ffprobe
 build
 db
 Dockerfile
