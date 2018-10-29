@@ -10,6 +10,7 @@ describe('resizer work', () => {
 
   let s3ImagePath = helper.putS3TestFile('small.png');
   let s3AudioPath = helper.putS3TestFile('mp3.png');
+  let logs = helper.spyLogger();
 
   let ie;
   beforeEach(() => {
@@ -78,6 +79,9 @@ describe('resizer work', () => {
       expect(file.downloaded).to.equal(true);
       expect(file.valid).to.equal(false);
       expect(file.resized).to.equal(false);
+      expect(file.error).to.match(/unsupported image format/i);
+      expect(logs.warn.length).to.equal(1);
+      expect(logs.warn[0]).to.match(/unsupported image format/i);
     });
   });
 
@@ -91,6 +95,9 @@ describe('resizer work', () => {
       expect(file.downloaded).to.equal(false);
       expect(file.valid).to.equal(false);
       expect(file.resized).to.equal(false);
+      expect(file.error).to.match(/got 403 for url:/i);
+      expect(logs.warn.length).to.equal(1);
+      expect(logs.warn[0]).to.match(/got 403 for url/i);
     });
   });
 
@@ -101,10 +108,13 @@ describe('resizer work', () => {
       (err) => {
         resizer.resize.restore()
         expect(err.message).to.match(/resize-err/i);
+
         let file = getUploadedFile();
         expect(file.downloaded).to.equal(true);
         expect(file.valid).to.equal(true);
         expect(file.resized).to.equal(false);
+        expect(file.error).to.match(/resize-err/i);
+        expect(logs.warn.length).to.equal(0);
       }
     );
   });
@@ -120,6 +130,8 @@ describe('resizer work', () => {
         expect(file.downloaded).to.equal(true);
         expect(file.valid).to.equal(true);
         expect(file.resized).to.equal(false);
+        expect(file.error).to.match(/upload-err/i);
+        expect(logs.warn.length).to.equal(0);
       }
     );
   });
@@ -132,6 +144,14 @@ describe('resizer work', () => {
       (success) => { throw 'should have gotten an error'; },
       (err) => {
         expect(err.message).to.match(/sqs-err/i);
+
+        // sqs errors actually happen twice - once on the initial send, and a
+        // second time when trying to report the first sqs error
+        expect(UploadedFile.prototype.callback.callCount).to.equal(2);
+        let f1 = UploadedFile.prototype.callback.thisValues[0];
+        let f2 = UploadedFile.prototype.callback.thisValues[1];
+        expect(f1).to.equal(f2);
+        expect(f1.error).to.match(/sqs-err/i);
       }
     );
   });
